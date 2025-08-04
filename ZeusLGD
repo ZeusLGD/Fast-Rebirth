@@ -1,0 +1,48 @@
+task.spawn(function()
+		while isRunning do
+			local currentRebirths = player.leaderstats.Rebirths.Value
+			local rebirthCost = 10000 + (5000 * currentRebirths)
+
+			if player.ultimatesFolder:FindFirstChild("Golden Rebirth") then
+				local goldenRebirths = player.ultimatesFolder["Golden Rebirth"].Value
+				rebirthCost = math.floor(rebirthCost * (1 - (goldenRebirths * 0.1)))
+			end
+
+			unequipAllPets()
+			task.wait(0.2)
+			equipUniquePet("Swift Samurai")
+
+			-- Subloop pra fazer rep até força atingir o necessário
+			while isRunning and player.leaderstats.Strength.Value < rebirthCost do
+				for i = 1, 10 do
+					player.muscleEvent:FireServer("rep")
+				end
+				task.wait(0.04)
+			end
+
+			-- Só equipa Tribal depois de atingir o rebirthCost
+			unequipAllPets()
+			task.wait(0.2)
+			equipUniquePet("Tribal Overlord")
+			task.wait(0.4)
+
+			local machine = findMachine("Jungle Bar Lift")
+			if machine and machine:FindFirstChild("interactSeat") then
+				player.Character.HumanoidRootPart.CFrame = machine.interactSeat.CFrame * CFrame.new(0, 3, 0)
+				repeat
+					task.wait(0.25)
+					pressE()
+				until player.Character.Humanoid.Sit
+			end
+
+			local initialRebirths = player.leaderstats.Rebirths.Value
+			repeat
+				ReplicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
+				task.wait(0.5)
+			until player.leaderstats.Rebirths.Value > initialRebirths or not isRunning
+
+			if not isRunning then break end
+			task.wait(0.2)
+		end
+	end)
+end)
