@@ -58,26 +58,26 @@ local function fastTrainAndRebirthLoop()
             player.Character.HumanoidRootPart.CFrame = seat.CFrame * CFrame.new(0, 3, 0)
             -- Em celular, forçamos o personagem a sentar
             player.Character.Humanoid.Sit = true
-            task.wait(0.5)
+            task.wait(0.25)
         end
 
         while player.leaderstats.Strength.Value < strengthTarget and _G.fastGrindActive do
             for _ = 1, 10 do
                 muscleEvent:FireServer("rep")
             end
-            task.wait(0.01)
+            task.wait(0.04)
         end
 
         equipPetsByName("Tribal Overlord")
-        task.wait(0.5)
+        task.wait(0.4)
 
         local before = player.leaderstats.Rebirths.Value
         repeat
             replicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
-            task.wait(0.1)
+            task.wait(0.5)
         until player.leaderstats.Rebirths.Value > before or not _G.fastGrindActive
 
-        task.wait(0.5)
+        task.wait(0.2)
     end
 end
 
