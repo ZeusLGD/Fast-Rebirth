@@ -1,25 +1,30 @@
 local player = game.Players.LocalPlayer
 local muscleEvent = player:WaitForChild("muscleEvent")
 local replicatedStorage = game:GetService("ReplicatedStorage")
--- Funktion: Alle Pets ablegen
+
+_G.fastGrindActive = false -- Controle global
+
+-- Unequipar pets
 local function unequipPets()
     for _, folder in pairs(player.petsFolder:GetChildren()) do
         if folder:IsA("Folder") then
             for _, pet in pairs(folder:GetChildren()) do
                 replicatedStorage.rEvents.equipPetEvent:FireServer("unequipPet", pet)
+                task.wait(0.05)
             end
         end
     end
-    task.wait(0.1)
+    task.wait(0.2)
 end
 
--- Function: Equipar todos os pets com um nome específico
+-- Equipar pets por nome
 local function equipPetsByName(name)
     unequipPets()
-    task.wait(0.01)
+    task.wait(0.2)
     for _, pet in pairs(player.petsFolder.Unique:GetChildren()) do
         if pet.Name == name then
             replicatedStorage.rEvents.equipPetEvent:FireServer("equipPet", pet)
+            task.wait(0.1)
         end
     end
 end
@@ -36,30 +41,11 @@ local function getJungleBarLiftSeat()
     return nil
 end
 
--- Taste E Simular
-local function pressE()
-    local vim = game:GetService("VirtualInputManager")
-    vim:SendKeyEvent(true, "E", false, game)
-    task.wait(0.05)
-    vim:SendKeyEvent(false, "E", false, game)
-end
-
--- Código removido para não esconder a UI
---[[
-for _, v in pairs(game.CoreGui:GetDescendants()) do
-    if v:IsA("Frame") then
-        v.Visible = false
-    end
-end
-]]
-
--- Central
+-- Loop principal com controle
 local function fastTrainAndRebirthLoop()
-    while true do
-        -- Swift Samurai ausrüsten
+    while _G.fastGrindActive do
         equipPetsByName("Swift Samurai")
 
-        -- Stärkegrenze berechnen
         local rebirths = player.leaderstats.Rebirths.Value
         local strengthTarget = 10000 + (rebirths * 5000)
         if player.ultimatesFolder:FindFirstChild("Golden Rebirth") then
@@ -67,35 +53,50 @@ local function fastTrainAndRebirthLoop()
             strengthTarget = math.floor(strengthTarget * (1 - (golden * 0.1)))
         end
 
-        -- Zum Jungle Bar Lift teleportieren
         local seat = getJungleBarLiftSeat()
         if seat then
             player.Character.HumanoidRootPart.CFrame = seat.CFrame * CFrame.new(0, 3, 0)
-            repeat task.wait(0.1) pressE() until player.Character.Humanoid.Sit
+            -- Em celular, forçamos o personagem a sentar
+            player.Character.Humanoid.Sit = true
+            task.wait(0.5)
         end
 
-        -- Sehr schnelles Training bis zur Stärkegrenze
-        while player.leaderstats.Strength.Value < strengthTarget do
+        while player.leaderstats.Strength.Value < strengthTarget and _G.fastGrindActive do
             for _ = 1, 10 do
                 muscleEvent:FireServer("rep")
             end
             task.wait(0.01)
         end
 
-        -- Tribal Overlord
         equipPetsByName("Tribal Overlord")
-        task.wait(0.2)
+        task.wait(0.5)
 
-        -- Rebirth
         local before = player.leaderstats.Rebirths.Value
         repeat
             replicatedStorage.rEvents.rebirthRemote:InvokeServer("rebirthRequest")
             task.wait(0.1)
-        until player.leaderstats.Rebirths.Value > before
+        until player.leaderstats.Rebirths.Value > before or not _G.fastGrindActive
 
         task.wait(0.5)
     end
 end
 
--- Start
-task.spawn(fastTrainAndRebirthLoop)
+-- Ativador
+local function startGrind()
+    if not _G.fastGrindActive then
+        _G.fastGrindActive = true
+        task.spawn(fastTrainAndRebirthLoop)
+    end
+end
+
+-- Parar
+local function stopGrind()
+    _G.fastGrindActive = false
+end
+
+-- Exemplo de como usar
+-- Para ligar:
+-- startGrind()
+
+-- Para desligar:
+-- stopGrind()
